@@ -1,8 +1,11 @@
 #!/bin/bash
 
-PATH_DEVPT="/dev/sda4"
+PATH_DEVPT="/dev/sda3"
 PATH_MOUNT="/mnt/windows-ntfs"
-PATH_FOLDER_LOCAL="/home/fborsani/SYNC"
+
+
+CURR_USER=$(who | grep -o ^[a-zA-Z0-9]*" " | tr -d [:space:])
+PATH_FOLDER_LOCAL="/home/${CURR_USER}/SYNC"
 PATH_FOLDER_WINDS="$PATH_MOUNT/SYNC"
 
 MOUNTED_LIST="/proc/mounts"
@@ -35,14 +38,15 @@ else
 fi
 
 if [ ! -f "$PATH_LOGFILE" ]; then
-	cat > $PATH_LOGFILE
+	cat > "$PATH_LOGFILE"
+  chown "$CURR_USER" "$PATH_LOGFILE"
 	echo "${TIMESTAMP} log file created" >> "$PATH_LOGFILE"
 fi
 
 echo "${TIMESTAMP} script started" >> "$PATH_LOGFILE"
 
 if [ ! -d "$PATH_MOUNT" ]; then
-	echo "WARNING: unable to locate mounted folder. Creating..." | tee -a "$PATH_LOGFILE"
+	echo "unable to locate mounted folder. Creating..." | tee -a "$PATH_LOGFILE"
 	mkdir -v $PATH_MOUNT | tee -a "$PATH_LOGFILE"
 	echo "access folder created" | tee -a "$PATH_LOGFILE"
 else
@@ -50,7 +54,7 @@ else
 fi
 
 if [ ! "$(ls -A $PATH_MOUNT)" ]; then
-	echo "WARNING: ntfs partition not mounted. Mounting..." | tee -a "$PATH_LOGFILE"
+	echo "ntfs partition not mounted. Mounting..." | tee -a "$PATH_LOGFILE"
 	mount -t ntfs-3g "$PATH_DEVPT" "$PATH_MOUNT" | tee -a "$PATH_LOGFILE"
 else
 	echo "partition mount OK" | tee -a "$PATH_LOGFILE"
@@ -59,8 +63,8 @@ fi
 if grep -q $PATH_DEVPT $MOUNTED_LIST; then
 	if grep $PATH_DEVPT $MOUNTED_LIST | grep -q "\sro"; then
 		echo "WARNING: partition is not writable. Will not send files." | tee -a "$PATH_LOGFILE"
-		$NOSEND=1	
-		
+		$NOSEND=1
+
 	fi
 else
 	echo "ERROR: partition has not been correctly mounted" | tee -a "$PATH_LOGFILE"
@@ -87,6 +91,8 @@ fi
 
 echo "${TIMESTAMP} Performing file copy from Windows to local folder..." | tee -a "$PATH_LOGFILE"
 cp -u -r --verbose "$PATH_FOLDER_WINDS/OUT/." "$PATH_FOLDER_LOCAL/IN/" | tee -a "$PATH_LOGFILE"
+cd "$PATH_FOLDER_LOCAL/IN"
+chown -R --verbose "$CURR_USER":"$CURR_USER" *| tee -a "$PATH_LOGFILE"
 
 echo "${TIMESTAMP} Syncronization done. Unmounting..." | tee -a "$PATH_LOGFILE"
 
@@ -94,9 +100,9 @@ umount -t ntfs-3g "$PATH_MOUNT"
 sleep 1
 
 if [ "$(ls -A "$PATH_MOUNT")" ]; then
-	echo "WARNING: unable to unmount partition" | tee -a "$PATH_LOGFILE"
-
-else 
+	echo "ERROR: unable to unmount partition" | tee -a "$PATH_LOGFILE"
+  exit
+else
 	echo "${TIMESTAMP} Partition unmounted succesfully" | tee -a "$PATH_LOGFILE"
 fi
 
