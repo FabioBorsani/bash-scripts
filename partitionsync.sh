@@ -67,7 +67,7 @@ else
 fi
 
 if [ ! -f "$PATH_LOGFILE" ]; then
-	cat > "$PATH_LOGFILE"
+	touch "$PATH_LOGFILE"
   chown "$CURR_USER":"$CURR_USER" "$PATH_LOGFILE"
 	echo "${TIMESTAMP} log file created" >> "$PATH_LOGFILE"
 fi
@@ -141,8 +141,7 @@ if [ "$1" = "-rr" ]; then
   rm -rf "$PATH_FOLDER_WINDS/OUT/*"
 fi
 
-cd "$PATH_FOLDER_LOCAL/IN"
-chown -R --verbose "$CURR_USER":"$CURR_USER" *| tee -a "$PATH_LOGFILE"
+chown -R --verbose "$CURR_USER":"$CURR_USER" "$PATH_FOLDER_LOCAL/IN" | tee -a "$PATH_LOGFILE"
 
 if [ $SKIP_UNMOUNT -eq 0 ]; then
   echo "${TIMESTAMP} Syncronization done. Unmounting..." | tee -a "$PATH_LOGFILE"
