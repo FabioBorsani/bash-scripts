@@ -15,6 +15,7 @@ TIMESTAMP=$(date +'%d-%m-%Y %H:%M:%S')
 
 NOSEND=0
 SKIP_UNMOUNT=0
+DO_COPY=1
 
 if [[ $UID != 0 ]]; then
    echo "This script requires root permissions"
@@ -22,31 +23,14 @@ if [[ $UID != 0 ]]; then
    exit
 fi
 
-case "$1" in
-  "-ch")
-  rm -rf "$PATH_LOGFILE"
-  echo "log file removed"
+if [ "$1" = "copy" ]; then
+  $READ_TYPE=1
+elif [ "$1" = "move" ]; then
+  $READ_TYPE=0
+else
+  echo "Invalid argument. Possible syntax is 'partitionsync.sh copy' or 'partitionsync.sh move'"
   exit
-  ;;
-  "-cl")
-  rm -rf "$PATH_FOLDER_LOCAL/IN/*"
-  rm -rf "$PATH_FOLDER_LOCAL/OUT/*"
-  echo "local folders cleared"
-  exit
-  ;;
-  "-ca")
-  rm -rf "$PATH_FOLDER_LOCAL/IN/*"
-  rm -rf "$PATH_FOLDER_LOCAL/OUT/*"
-  rm -rf "$PATH_LOGFILE"
-  echo "logs and local folders cleared"
-  exit
-  ;;
-  "--force-close")
-  umount -t ntfs-3g "$PATH_MOUNT"
-  echo "driver in default position unmounted"
-  exit
-  ;;
-esac
+fi
 
 command -v ntfs-3g >/dev/null 2>&1 || { echo >&2 "ERROR: ntfs-3g package requested. Aborting"; exit; }
 
@@ -124,21 +108,19 @@ fi
 
 if [ $NOSEND -eq 0 ]; then
 
-	echo "${TIMESTAMP} Performing file copy from local folder to windows..." | tee -a "$PATH_LOGFILE"
-	cp -u -r --verbose "$PATH_FOLDER_LOCAL/OUT/." "$PATH_FOLDER_WINDS/IN/" | tee -a "$PATH_LOGFILE"
-
-  if [ "$1" = "-rl" ]; then
-    echo "${TIMESTAMP} Cleaning local folder" | tee -a "$PATH_LOGFILE"
-    rm -rf "$PATH_FOLDER_LOCAL/OUT/*"
+  echo "${TIMESTAMP} Performing file copy from local folder to windows..." | tee -a "$PATH_LOGFILE"
+  if [ $DO_COPY -eq 1 ]; then
+    cp -u -r --verbose "$PATH_FOLDER_LOCAL/OUT/." "$PATH_FOLDER_WINDS/IN/" | tee -a "$PATH_LOGFILE"
+  else
+    mv -u -f --verbose "$PATH_FOLDER_LOCAL/OUT/." "$PATH_FOLDER_WINDS/IN/" | tee -a "$PATH_LOGFILE"
   fi
 fi
 
 echo "${TIMESTAMP} Performing file copy from Windows to local folder..." | tee -a "$PATH_LOGFILE"
-cp -u -r --verbose "$PATH_FOLDER_WINDS/OUT/." "$PATH_FOLDER_LOCAL/IN/" | tee -a "$PATH_LOGFILE"
-
-if [ "$1" = "-rr" ]; then
-  echo "${TIMESTAMP} Cleaning remote folder" | tee -a "$PATH_LOGFILE"
-  rm -rf "$PATH_FOLDER_WINDS/OUT/*"
+if [ $DO_COPY -eq 1 ]; then
+  cp -u -r --verbose "$PATH_FOLDER_WINDS/OUT/." "$PATH_FOLDER_LOCAL/IN/" | tee -a "$PATH_LOGFILE"
+else
+  cp -u -f --verbose "$PATH_FOLDER_WINDS/OUT/." "$PATH_FOLDER_LOCAL/IN/" | tee -a "$PATH_LOGFILE"
 fi
 
 chown -R --verbose "$CURR_USER":"$CURR_USER" "$PATH_FOLDER_LOCAL/IN" | tee -a "$PATH_LOGFILE"
