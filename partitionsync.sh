@@ -120,7 +120,7 @@ echo "${TIMESTAMP} Performing file copy from Windows to local folder..." | tee -
 if [ $DO_COPY -eq 1 ]; then
   cp -u -r --verbose "$PATH_FOLDER_WINDS/OUT/." "$PATH_FOLDER_LOCAL/IN/" | tee -a "$PATH_LOGFILE"
 else
-  cp -u -f --verbose "$PATH_FOLDER_WINDS/OUT/." "$PATH_FOLDER_LOCAL/IN/" | tee -a "$PATH_LOGFILE"
+  mv -u -f --verbose "$PATH_FOLDER_WINDS/OUT/." "$PATH_FOLDER_LOCAL/IN/" | tee -a "$PATH_LOGFILE"
 fi
 
 chown -R --verbose "$CURR_USER":"$CURR_USER" "$PATH_FOLDER_LOCAL/IN" | tee -a "$PATH_LOGFILE"
