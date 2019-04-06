@@ -24,9 +24,9 @@ if [[ $UID != 0 ]]; then
 fi
 
 if [ "$1" = "copy" ]; then
-  $READ_TYPE=1
+  $DO_COPY=1
 elif [ "$1" = "move" ]; then
-  $READ_TYPE=0
+  $DO_COPY=0
 else
   echo "Invalid argument. Possible syntax is 'partitionsync.sh copy' or 'partitionsync.sh move'"
   exit
