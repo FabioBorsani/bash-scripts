@@ -22,3 +22,4 @@ if [[ "$1" = "-update-conf" && ! -z "$2" ]]; then
     echo "down /etc/openvpn/update-resolv-conf" >> $f;
 	done
 fi
+sudo systemctl enable --now systemd-resolved
